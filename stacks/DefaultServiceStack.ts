@@ -12,7 +12,6 @@ export function DefaultServiceStack({ stack }: StackContext) {
         port: process.env.CONT_PORT ? parseInt(process.env.CONT_PORT) : 3000,
         cdk: {
             vpc,
-            applicationLoadBalancer: false,
             cloudfrontDistribution: false,
             container: {
                 image: ContainerImage.fromDockerImageAsset(new DockerImageBuilder()

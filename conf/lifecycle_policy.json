@@ -1,0 +1,16 @@
+{
+    "rules": [
+        {
+            "rulePriority": 2,
+            "description": "Remove old images of the same app",
+            "selection": {
+                "tagStatus": "any",
+                "countType": "imageCountMoreThan",
+                "countNumber": 1
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}

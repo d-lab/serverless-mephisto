@@ -1,6 +1,6 @@
 name: 'Serverless Deployment Action for Mephisto Apps'
 description: ''
-author: 'cngthnh'
+author: 'd-lab'
 inputs:
     parameterPairs:
         required: true

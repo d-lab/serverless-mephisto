@@ -10,6 +10,10 @@ export function DefaultServiceStack({ stack }: StackContext) {
     });
     new Service(stack, `${process.env.APP_NAME}-${process.env.APP_ENV}`, {
         port: process.env.CONT_PORT ? parseInt(process.env.CONT_PORT) : 3000,
+        scaling: {
+            minContainers: 1,
+            maxContainers: 2,
+        },
         cdk: {
             vpc,
             cloudfrontDistribution: false,

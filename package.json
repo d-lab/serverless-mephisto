@@ -2,7 +2,7 @@
   "name": "serverless-mephisto",
   "version": "0.0.0",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "sst dev",
     "build": "sst build",

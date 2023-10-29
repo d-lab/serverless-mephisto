@@ -1,4 +1,4 @@
-import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
+import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecrdeploy from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
 
@@ -53,6 +53,7 @@ export default class DockerImageBuilder {
         const image = new DockerImageAsset(this.stack, 'CDKDockerImage', {
             directory: this.path,
             buildArgs: this.buildArgs,
+            platform: Platform.LINUX_AMD64,
         });
 
         const targetImageWithTags = `${this.name}:latest`;

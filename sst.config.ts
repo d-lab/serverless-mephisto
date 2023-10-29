@@ -4,8 +4,9 @@ import { DefaultServiceStack } from "./stacks/DefaultServiceStack";
 export default {
   config(_input) {
     return {
-      name: `serverless-${process.env.APP_NAME}-${process.env.APP_ENV}`,
-      region: process.env.AWS_REGION || "ap-southeast-2"
+      name: `${process.env.APP_NAME}`,
+      region: process.env.AWS_REGION || "ap-southeast-2",
+      stage: process.env.APP_ENV || "dev",
     };
   },
   stacks(app) {

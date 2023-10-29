@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
+    "@types/aws-lambda": "^8.10.125",
     "@types/shelljs": "^0.8.13",
     "@vercel/ncc": "^0.38.0",
     "aws-cdk-lib": "2.95.1",
@@ -27,6 +28,7 @@
   ],
   "dependencies": {
     "@actions/core": "^1.10.1",
+    "@aws-sdk/client-ecs": "^3.438.0",
     "cdk-ecr-deployment": "^2.5.30"
   }
 }

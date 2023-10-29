@@ -12,4 +12,5 @@ export SVLD_VERSION=main
 export PREVIEW_URL_PREFIX='%Mock task launched.* for preview%'
 export CONT_PORT=3000
 export VPC_ID=vpc-02e937c4efdd7541b
+export DOMAIN=aufederal2022.com
 

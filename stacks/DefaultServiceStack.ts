@@ -1,12 +1,14 @@
 import {StackContext} from "sst/constructs/FunctionalStack";
 import {Service} from "sst/constructs";
 import DockerImageBuilder from "./DockerImageBuilder";
-import {ContainerImage, Cluster, FargateTaskDefinition, AwsLogDriver} from "aws-cdk-lib/aws-ecs";
-import {RetentionDays} from "aws-cdk-lib/aws-logs";
-import {Function, Runtime, Code} from "aws-cdk-lib/aws-lambda";
-import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
-import {PolicyStatement, Effect} from "aws-cdk-lib/aws-iam";
+import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 
 export function DefaultServiceStack({stack}: StackContext) {
     const vpc = ec2.Vpc.fromLookup(stack, `${stack.stackName}-vpc`, {
@@ -19,20 +21,20 @@ export function DefaultServiceStack({stack}: StackContext) {
     });
     securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3000), 'Allow incoming on port 3000');
 
-    const cluster = new Cluster(stack, `${stack.stackName}-cluster`, {
+    const cluster = new ecs.Cluster(stack, `${stack.stackName}-cluster`, {
         vpc,
         clusterName: `${stack.stackName}-cluster`
     })
-    const logging = new AwsLogDriver({
+    const logging = new ecs.AwsLogDriver({
         streamPrefix: `${stack.stackName}`,
-        logRetention: RetentionDays.ONE_WEEK,
+        logRetention: logs.RetentionDays.ONE_WEEK,
     });
-    const taskDefinition = new FargateTaskDefinition(stack, `${stack.stackName}-task`, {
+    const taskDefinition = new ecs.FargateTaskDefinition(stack, `${stack.stackName}-task`, {
         cpu: 256,
         memoryLimitMiB: 512,
     });
     const container = taskDefinition.addContainer(`${stack.stackName}-container`, {
-        image: ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
+        image: ecs.ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
             .withStack(stack)
             .withName(`${stack.stackName}-container`)
             .withPath("./app_test")
@@ -56,11 +58,11 @@ export function DefaultServiceStack({stack}: StackContext) {
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string
         },
-        portMappings: [{ containerPort: 3000 }]
+        portMappings: [{ containerPort: Number(process.env.CONT_PORT || 3000) }]
     });
 
-    const createTaskLambda = new NodejsFunction(stack, `${stack.stackName}-create-task`, {
-        runtime: Runtime.NODEJS_18_X,
+    const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task`, {
+        runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/createTask.ts",
         handler: "handler",
         reservedConcurrentExecutions: 1,
@@ -73,8 +75,43 @@ export function DefaultServiceStack({stack}: StackContext) {
         }
     });
 
-    const runTaskPolicyStatement = new PolicyStatement({
-        effect: Effect.ALLOW,
+    const updateTaskDnsLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-update-task-dns`, {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: "./lambda/updateTaskDns.ts",
+        handler: "handler",
+        environment: {
+            APP_ENV: process.env.APP_ENV as string,
+            APP_NAME: process.env.APP_NAME as string,
+            DOMAIN: process.env.DOMAIN as string | 'aufederal2022.com'
+        }
+    });
+    const updateDnsPolicyStatement = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+            'ec2:DescribeNetworkInterfaces',
+            'ecs:DescribeClusters',
+            'route53:ChangeResourceRecordSets',
+        ],
+        resources: [
+            '*'
+        ]
+    });
+    updateTaskDnsLambda.addToRolePolicy(updateDnsPolicyStatement);
+
+    const rule = new events.Rule(stack, `${stack.stackName}-rule`, {
+        eventPattern: {
+            source: ["aws.ecs"],
+            detailType: ["ECS Task State Change"],
+            detail: {
+                desiredStatus: ["RUNNING"],
+                lastStatus: ["RUNNING"]
+            }
+        }
+    });
+    rule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
+
+    const runTaskPolicyStatement = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
         actions: [
             'ecs:RunTask'
         ],
@@ -84,8 +121,8 @@ export function DefaultServiceStack({stack}: StackContext) {
     });
     createTaskLambda.addToRolePolicy(runTaskPolicyStatement);
 
-    const taskExecutionRolePolicyStatement = new PolicyStatement({
-        effect: Effect.ALLOW,
+    const taskExecutionRolePolicyStatement = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
         actions: [
             'iam:PassRole',
         ],

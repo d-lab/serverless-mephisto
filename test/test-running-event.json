@@ -1,0 +1,103 @@
+{
+  "version": "0",
+  "id": "bc2a6dcc-6ee3-dc0c-6d0e-b1623f8e9806",
+  "detail-type": "ECS Task State Change",
+  "source": "aws.ecs",
+  "account": "279615518931",
+  "time": "2023-10-29T14:15:24Z",
+  "region": "ap-southeast-2",
+  "resources": [
+    "arn:aws:ecs:ap-southeast-2:279615518931:task/dev-svl-mpt-test-DefaultServiceStack-cluster/9eae834751474aebb00e1c2f57afcce6"
+  ],
+  "detail": {
+    "attachments": [
+      {
+        "id": "f7ac2985-5bf0-4517-8549-802145ae9ef8",
+        "type": "eni",
+        "status": "ATTACHED",
+        "details": [
+          {
+            "name": "subnetId",
+            "value": "subnet-05f195a881ea9292b"
+          },
+          {
+            "name": "networkInterfaceId",
+            "value": "eni-0ee768e8e937fa748"
+          },
+          {
+            "name": "macAddress",
+            "value": "02:fa:50:2d:57:8f"
+          },
+          {
+            "name": "privateDnsName",
+            "value": "ip-10-0-15-253.ap-southeast-2.compute.internal"
+          },
+          {
+            "name": "privateIPv4Address",
+            "value": "10.0.15.253"
+          }
+        ]
+      }
+    ],
+    "attributes": [
+      {
+        "name": "ecs.cpu-architecture",
+        "value": "x86_64"
+      }
+    ],
+    "availabilityZone": "ap-southeast-2b",
+    "clusterArn": "arn:aws:ecs:ap-southeast-2:279615518931:cluster/dev-svl-mpt-test-DefaultServiceStack-cluster",
+    "connectivity": "CONNECTED",
+    "connectivityAt": "2023-10-29T14:14:52.362Z",
+    "containers": [
+      {
+        "containerArn": "arn:aws:ecs:ap-southeast-2:279615518931:container/dev-svl-mpt-test-DefaultServiceStack-cluster/9eae834751474aebb00e1c2f57afcce6/f750a771-05a6-459d-832b-cf00a8d268f5",
+        "lastStatus": "RUNNING",
+        "name": "dev-svl-mpt-test-DefaultServiceStack-container",
+        "image": "279615518931.dkr.ecr.ap-southeast-2.amazonaws.com/cdk-hnb659fds-container-assets-279615518931-ap-southeast-2:c0532787bab46841e18982525880b6ae3834576ed3816f13b56a9acc601e5194",
+        "imageDigest": "sha256:1b1bdf97af1ff53e2baf4226ddb26935350a33708d865cdcbae366a7c28a92d5",
+        "runtimeId": "9eae834751474aebb00e1c2f57afcce6-2393995676",
+        "taskArn": "arn:aws:ecs:ap-southeast-2:279615518931:task/dev-svl-mpt-test-DefaultServiceStack-cluster/9eae834751474aebb00e1c2f57afcce6",
+        "networkInterfaces": [
+          {
+            "attachmentId": "f7ac2985-5bf0-4517-8549-802145ae9ef8",
+            "privateIpv4Address": "10.0.15.253"
+          }
+        ],
+        "cpu": "0",
+        "managedAgents": [
+          {
+            "name": "ExecuteCommandAgent",
+            "status": "PENDING"
+          }
+        ]
+      }
+    ],
+    "cpu": "256",
+    "createdAt": "2023-10-29T14:14:48.945Z",
+    "desiredStatus": "RUNNING",
+    "enableExecuteCommand": true,
+    "ephemeralStorage": {
+      "sizeInGiB": 20
+    },
+    "group": "family:devsvlmpttestDefaultServiceStackdevsvlmpttestDefaultServiceStacktaskAD4745F5",
+    "launchType": "FARGATE",
+    "lastStatus": "RUNNING",
+    "memory": "512",
+    "overrides": {
+      "containerOverrides": [
+        {
+          "name": "dev-svl-mpt-test-DefaultServiceStack-container"
+        }
+      ]
+    },
+    "platformVersion": "1.4.0",
+    "pullStartedAt": "2023-10-29T14:15:00.28Z",
+    "pullStoppedAt": "2023-10-29T14:15:22.607Z",
+    "startedAt": "2023-10-29T14:15:24.7Z",
+    "taskArn": "arn:aws:ecs:ap-southeast-2:279615518931:task/dev-svl-mpt-test-DefaultServiceStack-cluster/9eae834751474aebb00e1c2f57afcce6",
+    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-2:279615518931:task-definition/devsvlmpttestDefaultServiceStackdevsvlmpttestDefaultServiceStacktaskAD4745F5:5",
+    "updatedAt": "2023-10-29T14:15:24.7Z",
+    "version": 3
+  }
+}

@@ -37,7 +37,8 @@ export function DefaultServiceStack({stack}: StackContext) {
         image: ecs.ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
             .withStack(stack)
             .withName(`${stack.stackName}-container`)
-            .withPath("./app_test")
+            // .withPath("./app_test")
+            .withPath("./app_src/app")
             .withBuildArgs({
                 GIT_USER_EMAIL: process.env.GIT_USER_EMAIL as string,
                 GIT_USER_NAME: process.env.GIT_USER_NAME as string,

@@ -98,7 +98,7 @@ export function DefaultServiceStack({stack}: StackContext) {
     });
     updateTaskDnsLambda.addToRolePolicy(updateDnsPolicyStatement);
 
-    const rule = new events.Rule(stack, `${stack.stackName}-rule`, {
+    const runningTaskRule = new events.Rule(stack, `${stack.stackName}-running-task-rule`, {
         eventPattern: {
             source: ["aws.ecs"],
             detailType: ["ECS Task State Change"],
@@ -108,7 +108,19 @@ export function DefaultServiceStack({stack}: StackContext) {
             }
         }
     });
-    rule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
+    runningTaskRule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
+
+    const deleteTaskRule = new events.Rule(stack, `${stack.stackName}-delete-task-rule`, {
+        eventPattern: {
+            source: ["aws.ecs"],
+            detailType: ["ECS Task State Change"],
+            detail: {
+                desiredStatus: ["STOPPED"],
+                lastStatus: ["RUNNING"]
+            }
+        }
+    });
+    deleteTaskRule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
 
     const runTaskPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,

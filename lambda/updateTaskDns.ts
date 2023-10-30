@@ -1,7 +1,7 @@
 import {Context, APIGatewayProxyResult, EventBridgeEvent} from 'aws-lambda';
 import {ECSClient, ListTagsForResourceCommand} from "@aws-sdk/client-ecs";
 import {EC2Client, DescribeNetworkInterfacesCommand} from "@aws-sdk/client-ec2";
-import {Route53Client, ChangeResourceRecordSetsCommand} from "@aws-sdk/client-route-53";
+import {Route53Client, ChangeResourceRecordSetsCommand, Change} from "@aws-sdk/client-route-53";
 
 const ecs = new ECSClient({region: 'ap-southeast-2'});
 const ec2 = new EC2Client({region: 'ap-southeast-2'});
@@ -33,7 +33,11 @@ export const handler = async (event: EventBridgeEvent<any, any>, context: Contex
     console.log(`task:${serviceName} public-id: ${taskPublicIp}`);
 
     const containerDomain = `${process.env.APP_NAME}.${process.env.DOMAIN}`;
-    const recordSet = createRecordSet(containerDomain, taskPublicIp);
+    let recordSet = createRecordSet(containerDomain, taskPublicIp);
+    if (event.detail.lastStatus === 'RUNNING' && event.detail.desiredStatus === 'STOPPED') {
+        console.log(`Deleting DNS record for ${containerDomain} (${taskPublicIp})`);
+        recordSet = deleteRecordSet(containerDomain, taskPublicIp);
+    }
 
     await updateDnsRecord(clusterName, HOSTED_ZONE_ID, recordSet);
     console.log(`DNS record update finished for ${containerDomain} (${taskPublicIp})`);
@@ -77,8 +81,25 @@ const createRecordSet = (domain: string, publicIp: string) => {
                 },
             ],
         },
-    };
+    } as Change;
 }
+
+const deleteRecordSet = (domain: string, publicIp: string) => {
+    return {
+        Action: 'DELETE',
+        ResourceRecordSet: {
+            Name: domain,
+            Type: 'A',
+            TTL: 180,
+            ResourceRecords: [
+                {
+                    Value: publicIp,
+                },
+            ],
+        },
+    } as Change;
+}
+
 
 const updateDnsRecord = async (clusterName: string, hostedZoneId: string, changeRecordSet: any) => {
     const command = new ChangeResourceRecordSetsCommand({

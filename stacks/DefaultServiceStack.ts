@@ -9,6 +9,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
+import * as efs from "aws-cdk-lib/aws-efs";
+import {Duration} from "aws-cdk-lib";
 
 export function DefaultServiceStack({stack}: StackContext) {
     const vpc = ec2.Vpc.fromLookup(stack, `${stack.stackName}-vpc`, {
@@ -29,16 +31,29 @@ export function DefaultServiceStack({stack}: StackContext) {
         streamPrefix: `${stack.stackName}`,
         logRetention: logs.RetentionDays.ONE_WEEK,
     });
+
     const taskDefinition = new ecs.FargateTaskDefinition(stack, `${stack.stackName}-task`, {
         cpu: 256,
-        memoryLimitMiB: 512,
+        memoryLimitMiB: 512
     });
+    taskDefinition.addToTaskRolePolicy(new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+            'ssmmessages:CreateControlChannel',
+            'ssmmessages:CreateDataChannel',
+            'ssmmessages:OpenControlChannel',
+            'ssmmessages:OpenDataChannel',
+        ],
+        resources: ['*']
+    }));
+
+
     const container = taskDefinition.addContainer(`${stack.stackName}-container`, {
         image: ecs.ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
             .withStack(stack)
             .withName(`${stack.stackName}-container`)
-            // .withPath("./app_test")
-            .withPath("./app_src/app")
+            .withPath("./app_test")
+            // .withPath("./app_src/app")
             .withBuildArgs({
                 GIT_USER_EMAIL: process.env.GIT_USER_EMAIL as string,
                 GIT_USER_NAME: process.env.GIT_USER_NAME as string,
@@ -55,14 +70,16 @@ export function DefaultServiceStack({stack}: StackContext) {
             .build()
             .getImage()),
         logging,
+        stopTimeout: Duration.seconds(Number(process.env.STOP_TIMEOUT || 30)),
         environment: {
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string
         },
-        portMappings: [{ containerPort: Number(process.env.CONT_PORT || 3000) }]
+        portMappings: [{containerPort: Number(process.env.CONT_PORT || 3000)}]
     });
 
     const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task`, {
+        functionName: `${stack.stackName}-create-task`,
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/createTask.ts",
         handler: "handler",
@@ -77,6 +94,7 @@ export function DefaultServiceStack({stack}: StackContext) {
     });
 
     const updateTaskDnsLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-update-task-dns`, {
+        functionName: `${stack.stackName}-update-task-dns`,
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/updateTaskDns.ts",
         handler: "handler",

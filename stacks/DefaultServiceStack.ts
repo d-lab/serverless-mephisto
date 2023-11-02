@@ -1,5 +1,5 @@
 import {StackContext} from "sst/constructs/FunctionalStack";
-import {Service} from "sst/constructs";
+import {Service, dependsOn, Script} from "sst/constructs";
 import DockerImageBuilder from "./DockerImageBuilder";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as logs from "aws-cdk-lib/aws-logs";
@@ -9,7 +9,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
-import * as efs from "aws-cdk-lib/aws-efs";
+import * as triggers from "aws-cdk-lib/triggers";
 import {Duration} from "aws-cdk-lib";
 
 export function DefaultServiceStack({stack}: StackContext) {
@@ -52,8 +52,8 @@ export function DefaultServiceStack({stack}: StackContext) {
         image: ecs.ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
             .withStack(stack)
             .withName(`${stack.stackName}-container`)
-            .withPath("./app_test")
-            // .withPath("./app_src/app")
+            // .withPath("./app_test")
+            .withPath("./app_src/app")
             .withBuildArgs({
                 GIT_USER_EMAIL: process.env.GIT_USER_EMAIL as string,
                 GIT_USER_NAME: process.env.GIT_USER_NAME as string,
@@ -78,8 +78,7 @@ export function DefaultServiceStack({stack}: StackContext) {
         portMappings: [{containerPort: Number(process.env.CONT_PORT || 3000)}]
     });
 
-    const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task`, {
-        functionName: `${stack.stackName}-create-task`,
+    const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task-${Date.now().toString()}`, {
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/createTask.ts",
         handler: "handler",
@@ -144,11 +143,11 @@ export function DefaultServiceStack({stack}: StackContext) {
     const runTaskPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-            'ecs:RunTask'
+            'ecs:RunTask',
+            'ecs:StopTask',
+            'ecs:ListTasks'
         ],
-        resources: [
-            taskDefinition.taskDefinitionArn,
-        ]
+        resources: ['*']
     });
     createTaskLambda.addToRolePolicy(runTaskPolicyStatement);
 
@@ -163,4 +162,11 @@ export function DefaultServiceStack({stack}: StackContext) {
         ]
     });
     createTaskLambda.addToRolePolicy(taskExecutionRolePolicyStatement);
+
+    const triggerCreateTask = new triggers.Trigger(stack, `${stack.stackName}-${Date.now().toString()}`, {
+        handler: createTaskLambda,
+        timeout: Duration.minutes(10),
+        invocationType: triggers.InvocationType.EVENT,
+    });
+    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda);
 }

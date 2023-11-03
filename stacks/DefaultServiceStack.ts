@@ -93,7 +93,6 @@ export function DefaultServiceStack({stack}: StackContext) {
     });
 
     const updateTaskDnsLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-update-task-dns`, {
-        functionName: `${stack.stackName}-update-task-dns`,
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/updateTaskDns.ts",
         handler: "handler",

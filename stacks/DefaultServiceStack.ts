@@ -70,7 +70,7 @@ export function DefaultServiceStack({stack}: StackContext) {
             .build()
             .getImage()),
         logging,
-        stopTimeout: Duration.seconds(Number(process.env.STOP_TIMEOUT || 30)),
+        stopTimeout: Duration.seconds(Number(process.env.STOP_TIMEOUT || 60)),
         environment: {
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string

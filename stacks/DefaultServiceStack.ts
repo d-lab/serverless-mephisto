@@ -113,6 +113,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
     }))
 
     taskDefinition.addToTaskRolePolicy(efsMountPolicy);
+    taskDefinition.addToExecutionRolePolicy(efsMountPolicy);
 
     const assetVolume: ecs.Volume = {
         efsVolumeConfiguration: {

@@ -50,7 +50,7 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
         
             const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
-            const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`
+            const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s-log-group", a[1]}' || '')`
             info(getTaskSubCmd);
             buffer = subProcess.execSync(`aws logs tail ${getTaskSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`);
             info(buffer.toString());

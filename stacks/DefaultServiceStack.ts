@@ -26,8 +26,16 @@ export function DefaultServiceStack({stack}: StackContext) {
     const cluster = new ecs.Cluster(stack, `${stack.stackName}-cluster`, {
         vpc,
         clusterName: `${stack.stackName}-cluster`
-    })
+    });
+
+    let logGroup = null;
+    try {
+        logGroup = new logs.LogGroup(stack, `${stack.stackName}-lg`, { logGroupName: `${stack.stackName}-log-group` });
+    } catch (ignored) {
+        logGroup = logs.LogGroup.fromLogGroupName(stack, `${stack.stackName}-lg`, `${stack.stackName}-log-group`);
+    }
     const logging = new ecs.AwsLogDriver({
+        logGroup,
         streamPrefix: `${stack.stackName}`,
         logRetention: logs.RetentionDays.ONE_WEEK,
     });

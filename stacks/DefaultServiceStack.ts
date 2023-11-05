@@ -102,6 +102,8 @@ export function DefaultServiceStack({ stack }: StackContext) {
         },
         name: `${stack.stackName}-asset-volume`,
     };
+
+    taskDefinition.addVolume(assetVolume);
     
     container.addMountPoints({
         sourceVolume: assetVolume.name,

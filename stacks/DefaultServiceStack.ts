@@ -96,6 +96,23 @@ export function DefaultServiceStack({ stack }: StackContext) {
         enableAutomaticBackups: false,
     });
 
+    const efsAccessPoint = fs.addAccessPoint(`${stack.stackName}-efs-ap`);
+    efsAccessPoint.node.addDependency(fs);
+
+    const efsMountPolicy = (new iam.PolicyStatement({
+        actions: [
+            'elasticfilesystem:ClientMount',
+            'elasticfilesystem:ClientWrite',
+            'elasticfilesystem:ClientRootAccess'
+        ], 
+        resources: [
+            efsAccessPoint.accessPointArn,
+            fs.fileSystemArn
+        ]
+    }))
+
+    taskDefinition.addToTaskRolePolicy(efsMountPolicy);
+
     const assetVolume: ecs.Volume = {
         efsVolumeConfiguration: {
             fileSystemId: fs.fileSystemId,

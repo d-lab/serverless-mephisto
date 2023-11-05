@@ -7,13 +7,13 @@ async function run(): Promise<void> {
         subProcess.execSync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/cngthnh/serverless-mephisto .deploy`)
         subProcess.execSync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
         
-        info("Signing in ECR");
-        let buffer = subProcess.execSync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
-            `--password-stdin ${process.env.AWS_ACCOUNT_ID as string}.dkr.ecr.${process.env.AWS_REGION as string}.amazonaws.com`);
-        info(buffer.toString());
+        // info("Signing in ECR");
+        // let buffer = subProcess.execSync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
+        //     `--password-stdin ${process.env.AWS_ACCOUNT_ID as string}.dkr.ecr.${process.env.AWS_REGION as string}.amazonaws.com`);
+        // info(buffer.toString());
         
         info("Installing dependencies...");
-        buffer = subProcess.execSync(`cd .deploy && npm install`);
+        let buffer = subProcess.execSync(`cd .deploy && npm install`);
         info(buffer.toString());
         buffer = subProcess.execSync(`sudo apt install -y jq`);
         info(buffer.toString());
@@ -50,7 +50,7 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
         
             const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
-            const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.STACK_NAME}-cluster --desired-status RUNNING | jq '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`
+            const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`
             info(getTaskSubCmd);
             buffer = subProcess.execSync(`while ! aws logs tail ${getTaskSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`,
             {

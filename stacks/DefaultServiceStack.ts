@@ -13,6 +13,7 @@ import * as triggers from "aws-cdk-lib/triggers";
 import {Duration} from "aws-cdk-lib";
 
 export function DefaultServiceStack({stack}: StackContext) {
+    process.env.STACK_NAME = stack.stackName;
     const vpc = ec2.Vpc.fromLookup(stack, `${stack.stackName}-vpc`, {
         vpcId: process.env.VPC_ID
     });

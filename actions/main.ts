@@ -15,6 +15,8 @@ async function run(): Promise<void> {
         info("Installing dependencies...");
         buffer = subProcess.execSync(`cd .deploy && npm install`);
         info(buffer.toString());
+        buffer = subProcess.execSync(`sudo apt install -y jq`);
+        info(buffer.toString());
 
         // info("Removing old stacks");
         // buffer = subProcess.execSync(`cd .deploy && echo "${process.env.APP_ENV}" | npm run remove`);
@@ -41,18 +43,22 @@ async function run(): Promise<void> {
             info("stderr: " + data);
         });
 
-        // stream.on('exit', () => {
-        //     info("Waiting for confirmation...");
-        //
-        //     const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
-        //     info(`Deployment process time: ${execTime} minutes`);
-        //
-        //     const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
-        //     buffer = subProcess.execSync(`while ! aws logs tail /sst/service/${process.env.APP_ENV}-serverless-${process.env.APP_NAME}-${process.env.APP_ENV}-${process.env.APP_NAME}-${process.env.APP_ENV} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`);
-        //
-        //     buffer = subProcess.execSync(`aws logs tail /sst/service/${process.env.APP_ENV}-serverless-${process.env.APP_NAME}-${process.env.APP_ENV}-${process.env.APP_NAME}-${process.env.APP_ENV} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
-        //     info(buffer.toString());
-        // });
+        stream.on('exit', () => {
+            info("Waiting for confirmation...");
+        
+            const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
+            info(`Deployment process time: ${execTime} minutes`);
+        
+            const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
+            const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.STACK_NAME}-cluster --desired-status RUNNING | jq '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`
+            buffer = subProcess.execSync(`while ! aws logs tail ${getTaskSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`,
+            {
+                timeout: 1800000 // millis
+            });
+        
+            buffer = subProcess.execSync(`aws logs tail ${getTaskSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
+            info(buffer.toString());
+        });
         
     } catch (e: any) {
         setFailed(e);

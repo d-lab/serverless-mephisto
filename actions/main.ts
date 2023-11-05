@@ -57,7 +57,7 @@ async function run(): Promise<void> {
                 timeout: 1800000 // millis
             });
         
-            buffer = subProcess.execSync(`aws logs tail ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
+            buffer = subProcess.execSync(`aws logs tail ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
             info(buffer.toString());
         });
         

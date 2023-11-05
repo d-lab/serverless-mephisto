@@ -95,6 +95,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         removalPolicy: RemovalPolicy.RETAIN,
         fileSystemName: `${stack.stackName}-fs`,
         enableAutomaticBackups: false,
+        securityGroup
     });
 
     const efsAccessPoint = fs.addAccessPoint(`${stack.stackName}-efs-ap`);

@@ -30,14 +30,13 @@ export function DefaultServiceStack({stack}: StackContext) {
 
     let logGroup = null;
     try {
-        logGroup = new logs.LogGroup(stack, `${stack.stackName}-lg`, { logGroupName: `${stack.stackName}-log-group` });
+        logGroup = new logs.LogGroup(stack, `${stack.stackName}-lg`, { logGroupName: `${stack.stackName}-log-group`, retention: logs.RetentionDays.ONE_WEEK });
     } catch (ignored) {
         logGroup = logs.LogGroup.fromLogGroupName(stack, `${stack.stackName}-lg`, `${stack.stackName}-log-group`);
     }
     const logging = new ecs.AwsLogDriver({
         logGroup,
-        streamPrefix: `${stack.stackName}`,
-        logRetention: logs.RetentionDays.ONE_WEEK,
+        streamPrefix: `${stack.stackName}`
     });
 
     const taskDefinition = new ecs.FargateTaskDefinition(stack, `${stack.stackName}-task`, {

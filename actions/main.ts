@@ -4,7 +4,7 @@ import * as subProcess from 'child_process';
 async function run(): Promise<void> {
     try {
         info("Cloning deployment kit into the board");
-        subProcess.execSync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/d-lab/serverless-mephisto .deploy`)
+        subProcess.execSync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/cngthnh/serverless-mephisto .deploy`)
         subProcess.execSync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
         
         info("Signing in ECR");

@@ -1,5 +1,5 @@
-import {StackContext} from "sst/constructs/FunctionalStack";
-import {Service, dependsOn, Script} from "sst/constructs";
+import { StackContext } from "sst/constructs/FunctionalStack";
+import { Service, dependsOn, Script } from "sst/constructs";
 import DockerImageBuilder from "./DockerImageBuilder";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as logs from "aws-cdk-lib/aws-logs";
@@ -7,12 +7,13 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as efs from "aws-cdk-lib/aws-efs";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as triggers from "aws-cdk-lib/triggers";
-import {Duration} from "aws-cdk-lib";
+import { Duration, RemovalPolicy } from "aws-cdk-lib";
 
-export function DefaultServiceStack({stack}: StackContext) {
+export function DefaultServiceStack({ stack }: StackContext) {
     const vpc = ec2.Vpc.fromLookup(stack, `${stack.stackName}-vpc`, {
         vpcId: process.env.VPC_ID
     });
@@ -82,7 +83,30 @@ export function DefaultServiceStack({stack}: StackContext) {
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string
         },
-        portMappings: [{containerPort: Number(process.env.CONT_PORT || 3000)}]
+        portMappings: [{ containerPort: Number(process.env.CONT_PORT || 3000) }]
+    });
+
+    const fs = new efs.FileSystem(stack, `${stack.stackName}-fs`, {
+        vpc,
+        encrypted: false,
+        lifecyclePolicy: efs.LifecyclePolicy.AFTER_60_DAYS,
+        performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
+        removalPolicy: RemovalPolicy.RETAIN,
+        fileSystemName: `${stack.stackName}-fs`,
+        enableAutomaticBackups: false,
+    });
+
+    const assetVolume: ecs.Volume = {
+        efsVolumeConfiguration: {
+            fileSystemId: fs.fileSystemId,
+        },
+        name: `${stack.stackName}-asset-volume`,
+    };
+    
+    container.addMountPoints({
+        sourceVolume: assetVolume.name,
+        containerPath: "/mephisto/data/data",
+        readOnly: false,
     });
 
     const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task-${Date.now().toString()}`, {

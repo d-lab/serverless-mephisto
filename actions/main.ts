@@ -51,6 +51,7 @@ async function run(): Promise<void> {
         
             const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
             const getTaskSubCmd = `$(aws ecs list-tasks --cluster ${process.env.STACK_NAME}-cluster --desired-status RUNNING | jq '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`
+            info(getTaskSubCmd);
             buffer = subProcess.execSync(`while ! aws logs tail ${getTaskSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`,
             {
                 timeout: 1800000 // millis

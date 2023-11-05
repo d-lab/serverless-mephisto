@@ -23,6 +23,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         securityGroupName: `${stack.stackName}-security-group`
     });
     securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3000), 'Allow incoming on port 3000');
+    securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(2049), 'Allow incoming on port 2049');
 
     const cluster = new ecs.Cluster(stack, `${stack.stackName}-cluster`, {
         vpc,

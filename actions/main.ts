@@ -7,13 +7,13 @@ async function run(): Promise<void> {
         subProcess.execSync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/d-lab/serverless-mephisto .deploy`)
         subProcess.execSync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
         
-        // info("Signing in ECR");
-        // let buffer = subProcess.execSync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
-        //     `--password-stdin ${process.env.AWS_ACCOUNT_ID as string}.dkr.ecr.${process.env.AWS_REGION as string}.amazonaws.com`);
-        // info(buffer.toString());
+        info("Signing in ECR");
+        let buffer = subProcess.execSync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
+            `--password-stdin ${process.env.AWS_ACCOUNT_ID as string}.dkr.ecr.${process.env.AWS_REGION as string}.amazonaws.com`);
+        info(buffer.toString());
 
         info("Installing dependencies...");
-        let buffer = subProcess.execSync(`cd .deploy && npm install`);
+        buffer = subProcess.execSync(`cd .deploy && npm install`);
         info(buffer.toString());
 
         // info("Removing old stacks");

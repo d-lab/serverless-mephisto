@@ -1,3 +1,4 @@
+node_modules
 .sst
 cdk.context.json
 lambda/*.js

@@ -219,5 +219,5 @@ export function DefaultServiceStack({ stack }: StackContext) {
         timeout: Duration.minutes(10),
         invocationType: triggers.InvocationType.EVENT,
     });
-    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda, securityGroup, cluster, taskDefinition, container, fs, efsAccessPoint, assetVolume);
+    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda, securityGroup, cluster, taskDefinition, fs, assetVolume);
 }

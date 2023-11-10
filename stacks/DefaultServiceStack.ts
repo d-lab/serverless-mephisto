@@ -30,12 +30,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         clusterName: `${stack.stackName}-cluster`
     });
 
-    let logGroup = null;
-    try {
-        logGroup = new logs.LogGroup(stack, `${stack.stackName}-lg`, { logGroupName: `${stack.stackName}-log-group`, retention: logs.RetentionDays.ONE_WEEK });
-    } catch (ignored) {
-        logGroup = logs.LogGroup.fromLogGroupName(stack, `${stack.stackName}-lg`, `${stack.stackName}-log-group`);
-    }
+    let logGroup = logs.LogGroup.fromLogGroupName(stack, `${stack.stackName}-lg`, `mephisto-apps-log-group`);
     const logging = new ecs.AwsLogDriver({
         logGroup,
         streamPrefix: `${stack.stackName}`
@@ -89,6 +84,10 @@ export function DefaultServiceStack({ stack }: StackContext) {
 
     const fs = new efs.FileSystem(stack, `${stack.stackName}-fs`, {
         vpc,
+        vpcSubnets: {
+            availabilityZones: [vpc.availabilityZones[0]],
+            onePerAz: true
+        },
         encrypted: false,
         lifecyclePolicy: efs.LifecyclePolicy.AFTER_60_DAYS,
         performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,

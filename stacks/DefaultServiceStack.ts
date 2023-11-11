@@ -89,7 +89,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
             onePerAz: true
         },
         encrypted: false,
-        lifecyclePolicy: efs.LifecyclePolicy.AFTER_60_DAYS,
+        lifecyclePolicy: efs.LifecyclePolicy.AFTER_7_DAYS,
         performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
         removalPolicy: RemovalPolicy.RETAIN,
         fileSystemName: `${stack.stackName}-fs`,
@@ -219,5 +219,5 @@ export function DefaultServiceStack({ stack }: StackContext) {
         timeout: Duration.minutes(10),
         invocationType: triggers.InvocationType.EVENT,
     });
-    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda, securityGroup, cluster, taskDefinition, fs);
+    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda, securityGroup, cluster, taskDefinition, fs, efsAccessPoint);
 }

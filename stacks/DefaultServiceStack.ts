@@ -84,10 +84,10 @@ export function DefaultServiceStack({ stack }: StackContext) {
 
     const fs = new efs.FileSystem(stack, `${stack.stackName}-fs`, {
         vpc,
-        vpcSubnets: {
-            availabilityZones: [vpc.availabilityZones[0]],
-            onePerAz: true
-        },
+        // vpcSubnets: {
+        //     availabilityZones: [vpc.availabilityZones[0]],
+        //     onePerAz: true
+        // },
         encrypted: false,
         lifecyclePolicy: efs.LifecyclePolicy.AFTER_7_DAYS,
         performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,

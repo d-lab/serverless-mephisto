@@ -18,6 +18,11 @@ export const handler = async (event: EventBridgeEvent<any, any>, context: Contex
 
     const clusterName = clusterArn.split(':cluster/')[1];
 
+    if (clusterName !== process.env.CLUSTER_NAME) {
+        console.log("Another app triggered, skip for this cluster");
+        return;
+    }
+
     const eniId = getEniId(task);
     if (!eniId) {
         console.log('Network interface not found');

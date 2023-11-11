@@ -149,6 +149,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         entry: "./lambda/updateTaskDns.ts",
         handler: "handler",
         environment: {
+            CLUSTER_NAME: cluster.clusterName,
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string,
             DOMAIN: process.env.DOMAIN as string | 'aufederal2022.com'

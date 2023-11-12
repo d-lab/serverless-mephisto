@@ -52,7 +52,7 @@ export default class DockerImageBuilder {
         }
 
         console.log("Env: CDK_DOCKER: " + process.env.CDK_DOCKER);
-        process.env.CDK_DOCKER = "docker buildx";
+        // process.env.CDK_DOCKER = "docker buildx";
 
         const image = new DockerImageAsset(this.stack, 'CDKDockerImage', {
             directory: this.path,

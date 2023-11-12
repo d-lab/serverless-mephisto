@@ -1,5 +1,5 @@
-import {StackContext} from "sst/constructs/FunctionalStack";
-import {Service, dependsOn, Script} from "sst/constructs";
+import { StackContext } from "sst/constructs/FunctionalStack";
+import { Service, dependsOn, Script } from "sst/constructs";
 import DockerImageBuilder from "./DockerImageBuilder";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as logs from "aws-cdk-lib/aws-logs";
@@ -7,12 +7,13 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as efs from "aws-cdk-lib/aws-efs";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as triggers from "aws-cdk-lib/triggers";
-import {Duration} from "aws-cdk-lib";
+import { Duration, RemovalPolicy } from "aws-cdk-lib";
 
-export function DefaultServiceStack({stack}: StackContext) {
+export function DefaultServiceStack({ stack }: StackContext) {
     const vpc = ec2.Vpc.fromLookup(stack, `${stack.stackName}-vpc`, {
         vpcId: process.env.VPC_ID
     });
@@ -22,14 +23,17 @@ export function DefaultServiceStack({stack}: StackContext) {
         securityGroupName: `${stack.stackName}-security-group`
     });
     securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3000), 'Allow incoming on port 3000');
+    securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(2049), 'Allow incoming on port 2049');
 
     const cluster = new ecs.Cluster(stack, `${stack.stackName}-cluster`, {
         vpc,
         clusterName: `${stack.stackName}-cluster`
-    })
+    });
+
+    let logGroup = logs.LogGroup.fromLogGroupName(stack, `${stack.stackName}-lg`, `mephisto-apps-log-group`);
     const logging = new ecs.AwsLogDriver({
-        streamPrefix: `${stack.stackName}`,
-        logRetention: logs.RetentionDays.ONE_WEEK,
+        logGroup,
+        streamPrefix: `${stack.stackName}`
     });
 
     const taskDefinition = new ecs.FargateTaskDefinition(stack, `${stack.stackName}-task`, {
@@ -70,12 +74,60 @@ export function DefaultServiceStack({stack}: StackContext) {
             .build()
             .getImage()),
         logging,
-        stopTimeout: Duration.seconds(Number(process.env.STOP_TIMEOUT || 60)),
+        stopTimeout: Duration.seconds(Number(process.env.STOP_TIMEOUT || 30)),
         environment: {
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string
         },
-        portMappings: [{containerPort: Number(process.env.CONT_PORT || 3000)}]
+        portMappings: [{ containerPort: Number(process.env.CONT_PORT || 3000) }]
+    });
+
+    const fs = new efs.FileSystem(stack, `${stack.stackName}-fs`, {
+        vpc,
+        // vpcSubnets: {
+        //     availabilityZones: [vpc.availabilityZones[0]],
+        //     onePerAz: true
+        // },
+        encrypted: false,
+        lifecyclePolicy: efs.LifecyclePolicy.AFTER_7_DAYS,
+        performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
+        removalPolicy: RemovalPolicy.RETAIN,
+        fileSystemName: `${stack.stackName}-fs`,
+        enableAutomaticBackups: false,
+        securityGroup
+    });
+
+    const efsAccessPoint = fs.addAccessPoint(`${stack.stackName}-efs-ap`);
+    efsAccessPoint.node.addDependency(fs);
+
+    const efsMountPolicy = (new iam.PolicyStatement({
+        actions: [
+            'elasticfilesystem:ClientMount',
+            'elasticfilesystem:ClientWrite',
+            'elasticfilesystem:ClientRootAccess'
+        ],
+        resources: [
+            efsAccessPoint.accessPointArn,
+            fs.fileSystemArn
+        ]
+    }))
+
+    taskDefinition.addToTaskRolePolicy(efsMountPolicy);
+    taskDefinition.addToExecutionRolePolicy(efsMountPolicy);
+
+    const assetVolume: ecs.Volume = {
+        efsVolumeConfiguration: {
+            fileSystemId: fs.fileSystemId,
+        },
+        name: `${stack.stackName}-asset-volume`,
+    };
+
+    taskDefinition.addVolume(assetVolume);
+
+    container.addMountPoints({
+        sourceVolume: assetVolume.name,
+        containerPath: "/mephisto/data/data",
+        readOnly: false,
     });
 
     const createTaskLambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-create-task-${Date.now().toString()}`, {
@@ -97,6 +149,7 @@ export function DefaultServiceStack({stack}: StackContext) {
         entry: "./lambda/updateTaskDns.ts",
         handler: "handler",
         environment: {
+            CLUSTER_NAME: cluster.clusterName,
             APP_ENV: process.env.APP_ENV as string,
             APP_NAME: process.env.APP_NAME as string,
             DOMAIN: process.env.DOMAIN as string | 'aufederal2022.com'
@@ -167,5 +220,5 @@ export function DefaultServiceStack({stack}: StackContext) {
         timeout: Duration.minutes(10),
         invocationType: triggers.InvocationType.EVENT,
     });
-    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda);
+    triggerCreateTask.executeAfter(createTaskLambda, updateTaskDnsLambda, securityGroup, cluster, taskDefinition, fs, efsAccessPoint);
 }

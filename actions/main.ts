@@ -43,7 +43,6 @@ async function run(): Promise<void> {
         });
 
         stream.on('exit', async () => {
-            info("Waiting for confirmation...");
         
             const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
             info(`Deployment process time: ${execTime} minutes`);
@@ -62,6 +61,9 @@ async function run(): Promise<void> {
                     previewUrlPattern = '%Mock task launched.* for preview%';
                 }
             }
+
+            info("Preview URL pattern: " + previewUrlPattern);
+            info("Waiting for confirmation...");
         
             const grepPattern = previewUrlPattern?.slice(1,-1);
             const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;

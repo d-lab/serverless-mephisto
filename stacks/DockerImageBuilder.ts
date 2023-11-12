@@ -1,6 +1,7 @@
 import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecrdeploy from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
+import * as subProcess from 'child_process';
 
 export default class DockerImageBuilder {
     private name: string;

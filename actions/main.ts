@@ -43,23 +43,23 @@ async function run(): Promise<void> {
             info("stderr: " + data);
         });
 
-        stream.on('exit', () => {
-            info("Waiting for confirmation...");
-
-            const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
-            info(`Deployment process time: ${execTime} minutes`);
-
-            const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
-            const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
-
-            buffer = subProcess.execSync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`,
-                {
-                    timeout: 1800000 // millis
-                });
-
-            buffer = subProcess.execSync(`aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
-            info(buffer.toString());
-        });
+        // stream.on('exit', () => {
+        //     info("Waiting for confirmation...");
+        //
+        //     const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
+        //     info(`Deployment process time: ${execTime} minutes`);
+        //
+        //     const grepPattern = process.env.PREVIEW_URL_PREFIX?.slice(1,-1);
+        //     const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
+        //
+        //     buffer = subProcess.execSync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; done`,
+        //         {
+        //             timeout: 1800000 // millis
+        //         });
+        //
+        //     buffer = subProcess.execSync(`aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${process.env.PREVIEW_URL_PREFIX}' --since ${execTime}m`)
+        //     info(buffer.toString());
+        // });
 
     } catch (e: any) {
         setFailed(e);

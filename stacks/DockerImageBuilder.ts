@@ -51,6 +51,8 @@ export default class DockerImageBuilder {
             throw new Error("There is no scope to build");
         }
 
+        process.env.CDK_DOCKER = "docker buildx";
+
         const image = new DockerImageAsset(this.stack, 'CDKDockerImage', {
             directory: this.path,
             buildArgs: this.buildArgs,

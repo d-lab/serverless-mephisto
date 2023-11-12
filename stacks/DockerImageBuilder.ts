@@ -51,9 +51,6 @@ export default class DockerImageBuilder {
             throw new Error("There is no scope to build");
         }
 
-        // console.log("Env: CDK_DOCKER: " + process.env.CDK_DOCKER);
-        process.env.CDK_DOCKER = '#!/bin/bash\nif [ "$3" == "build" ]\nthen set -- "${@:4} --load"\nfi\n~/.docker/cli-plugins/docker-buildx build $@'
-
         const image = new DockerImageAsset(this.stack, 'CDKDockerImage', {
             directory: this.path,
             buildArgs: this.buildArgs,

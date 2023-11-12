@@ -6,16 +6,16 @@ import * as fs from 'fs';
 async function run(): Promise<void> {
     try {
         info("Cloning deployment kit into the board");
-        execAsync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/cngthnh/serverless-mephisto .deploy`)
-        execAsync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
+        await execAsync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/cngthnh/serverless-mephisto .deploy`)
+        await execAsync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
         
         info("Signing in ECR");
-        execAsync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
+        await execAsync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +
             `--password-stdin ${process.env.AWS_ACCOUNT_ID as string}.dkr.ecr.${process.env.AWS_REGION as string}.amazonaws.com`);
         
         info("Installing dependencies...");
-        execAsync(`cd .deploy && npm install`);
-        execAsync(`sudo apt install -y jq`);
+        await execAsync(`cd .deploy && npm install`);
+        await execAsync(`sudo apt install -y jq`);
 
         // info("Removing old stacks");
         // buffer = subProcess.execSync(`cd .deploy && echo "${process.env.APP_ENV}" | npm run remove`);

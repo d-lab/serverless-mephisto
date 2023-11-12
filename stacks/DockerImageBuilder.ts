@@ -55,14 +55,14 @@ export default class DockerImageBuilder {
             directory: this.path,
             buildArgs: this.buildArgs,
             platform: Platform.LINUX_AMD64,
-            // cacheFrom: [{
-            //     type: 'gha',
-            //     params: {}
-            // }],
-            // cacheTo: {
-            //     type: 'gha',
-            //     params: {}
-            // }
+            cacheFrom: [{
+                type: 'gha',
+                params: {}
+            }],
+            cacheTo: {
+                type: 'gha',
+                params: {}
+            }
         });
 
         const targetImageWithTags = `${this.name}:latest`;

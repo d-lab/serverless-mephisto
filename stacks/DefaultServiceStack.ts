@@ -105,7 +105,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
             'elasticfilesystem:ClientMount',
             'elasticfilesystem:ClientWrite',
             'elasticfilesystem:ClientRootAccess'
-        ],
+        ], 
         resources: [
             efsAccessPoint.accessPointArn,
             fs.fileSystemArn
@@ -123,7 +123,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
     };
 
     taskDefinition.addVolume(assetVolume);
-
+    
     container.addMountPoints({
         sourceVolume: assetVolume.name,
         containerPath: "/mephisto/data/data",

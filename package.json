@@ -11,7 +11,7 @@
     "console": "sst console",
     "typecheck": "tsc --noEmit",
     "build-action": "tsc --outDir dist",
-    "package": "ncc build actions/main.ts -o dist -m --target es2020 -e '@actions/core'"
+    "package": "ncc build actions/main.ts -o dist --target es2020 -m"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",

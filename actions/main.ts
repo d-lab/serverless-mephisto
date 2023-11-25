@@ -48,18 +48,10 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
-            if (process.env.MTURK_TYPE?.includes('mturk')) {
-                if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
-                } else {
-                    previewUrlPattern = '%Mock task launched.* for preview%';
-                }
-            } else if (process.env.MTURK_TYPE?.includes('prolific')) {
-                if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                    previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
-                } else {
-                    previewUrlPattern = '%Mock task launched.* for preview%';
-                }
+            if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
+                previewUrlPattern = '%mturk\.com\/mturk\/preview\?groupId\=|Prolific Study .* has been published successfully with ID%';
+            } else {
+                previewUrlPattern = '%Mock task launched.* for preview%';
             }
 
             info("Preview URL pattern: " + previewUrlPattern);

@@ -49,7 +49,7 @@ async function run(): Promise<void> {
 
             let previewUrlPattern = null;
             if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                previewUrlPattern = '%(mturk\\.com\\/mturk\\/preview\\?groupId\\=)|(Prolific Study .* has been published successfully with ID)%';
+                previewUrlPattern = '%mturk\\.com\\/mturk\\/preview\\?groupId\\=|Prolific Study .* has been published successfully with ID%';
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
             }

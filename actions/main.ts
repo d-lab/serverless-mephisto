@@ -48,6 +48,7 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
+            let grepPattern = null;
             const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
                     .map(line => line.trim().toLowerCase())
                     .filter(line => line.startsWith("default_config_file") && line.includes("prolific"));
@@ -55,26 +56,30 @@ async function run(): Promise<void> {
                 if (prolificConfigs.filter(line => line.includes("prod")).length > 0) {
                     info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                    grepPattern = previewUrlPattern?.slice(1,-1);
                 } else {
                     info("Using MTurk");
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
+                    previewUrlPattern = 'mturk.com/mturk/preview?groupId=';
+                    grepPattern = previewUrlPattern;
                 }
             } if (process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
                 if (prolificConfigs.filter(line => line.includes("test") || line.includes("sb")).length > 0) {
                     info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                    grepPattern = previewUrlPattern?.slice(1,-1);
                 } else {
                     info("Using MTurk");
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
+                    previewUrlPattern = 'mturk.com/mturk/preview?groupId=';
+                    grepPattern = previewUrlPattern;
                 }
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
+                grepPattern = previewUrlPattern?.slice(1,-1);
             }
 
             info("Preview URL pattern: " + previewUrlPattern);
             info("Waiting for confirmation...");
         
-            const grepPattern = previewUrlPattern?.slice(1,-1);
             const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
             
             await execAsync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern "${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do sleep 5; echo "Scanning for logs..."; done`,

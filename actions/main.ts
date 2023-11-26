@@ -49,7 +49,8 @@ async function run(): Promise<void> {
 
             let previewUrlPattern = null;
             if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                previewUrlPattern = '%mturk\\.com\\/mturk\\/preview\\?groupId\\=|Prolific Study .* has been published successfully with ID%';
+                //mturk\\.com\\/mturk\\/preview\\?groupId\\=|
+                previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
             }
@@ -60,7 +61,7 @@ async function run(): Promise<void> {
             const grepPattern = previewUrlPattern?.slice(1,-1);
             const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
             
-            await execAsync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern "${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do sleep 5; aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern "${previewUrlPattern}" --since ${execTime}m; done`,
+            await execAsync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern "${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do sleep 5; echo "Scanning for logs..."; done`,
             {
                 timeout: 1800000 // millis
             });

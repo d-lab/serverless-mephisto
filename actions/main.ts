@@ -48,11 +48,19 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
-            if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
+            const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
                     .map(line => line.trim().toLowerCase())
                     .filter(line => line.startsWith("default_config_file") && line.includes("prolific"));
-                if (prolificConfigs.length > 0) {
+            if (process.env.APP_ENV === 'prod') {
+                if (prolificConfigs.filter(line => line.includes("prod")).length > 0) {
+                    info("Using Prolific");
+                    previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                } else {
+                    info("Using MTurk");
+                    previewUrlPattern = '%mturk\\.com\\/mturk\\/preview\\?groupId\\=%';
+                }
+            } if (process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
+                if (prolificConfigs.filter(line => line.includes("test") || line.includes("sb")).length > 0) {
                     info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
                 } else {

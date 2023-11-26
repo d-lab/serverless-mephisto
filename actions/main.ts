@@ -65,7 +65,7 @@ async function run(): Promise<void> {
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
                 } else {
                     info("Using MTurk");
-                    previewUrlPattern = '%mturk\\.com\\/mturk\\/preview\\?groupId\\=%';
+                    previewUrlPattern = '%mturk\\.com/mturk/preview\\?groupId=%';
                 }
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';

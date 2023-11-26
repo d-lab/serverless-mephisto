@@ -49,8 +49,16 @@ async function run(): Promise<void> {
 
             let previewUrlPattern = null;
             if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                //mturk\\.com\\/mturk\\/preview\\?groupId\\=|
-                previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
+                    .map(line => line.trim().toLowerCase())
+                    .filter(line => line.startsWith("default_config_file") && line.includes("prolific"));
+                if (prolificConfigs.length > 0) {
+                    info("Using Prolific");
+                    previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                } else {
+                    info("Using MTurk");
+                    previewUrlPattern = '%mturk\\.com\\/mturk\\/preview\\?groupId\\=%';
+                }
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
             }

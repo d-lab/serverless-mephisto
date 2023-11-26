@@ -70,7 +70,7 @@ async function run(): Promise<void> {
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
             }
-            const grepPattern = previewUrlPattern?.slice(1,-1);
+            const grepPattern = previewUrlPattern?.slice(1,-1).replaceAll("\\", "");
 
             info("Preview URL pattern: " + previewUrlPattern);
             info("Waiting for confirmation...");

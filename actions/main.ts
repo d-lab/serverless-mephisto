@@ -48,7 +48,6 @@ async function run(): Promise<void> {
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
-            let grepPattern = null;
             const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
                     .map(line => line.trim().toLowerCase())
                     .filter(line => line.startsWith("default_config_file") && line.includes("prolific"));
@@ -56,26 +55,22 @@ async function run(): Promise<void> {
                 if (prolificConfigs.filter(line => line.includes("prod")).length > 0) {
                     info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
-                    grepPattern = previewUrlPattern?.slice(1,-1);
                 } else {
                     info("Using MTurk");
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
-                    grepPattern = previewUrlPattern?.slice(1,-1);
+                    previewUrlPattern = '%mturk\\.com/mturk/preview\\?groupId=%';
                 }
             } if (process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
                 if (prolificConfigs.filter(line => line.includes("test") || line.includes("sb")).length > 0) {
                     info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
-                    grepPattern = previewUrlPattern?.slice(1,-1);
                 } else {
                     info("Using MTurk");
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
-                    grepPattern = previewUrlPattern?.slice(1,-1);
+                    previewUrlPattern = '%mturk\\.com/mturk/preview\\?groupId=%';
                 }
             } else {
                 previewUrlPattern = '%Mock task launched.* for preview%';
-                grepPattern = previewUrlPattern?.slice(1,-1);
             }
+            const grepPattern = previewUrlPattern?.slice(1,-1);
 
             info("Preview URL pattern: " + previewUrlPattern);
             info("Waiting for confirmation...");

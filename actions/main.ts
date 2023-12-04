@@ -43,37 +43,47 @@ async function run(): Promise<void> {
         });
 
         stream.on('exit', async () => {
-        
-            const execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
+            let execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
-            if (process.env.MTURK_TYPE?.includes('mturk')) {
-                if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
-                    previewUrlPattern = '%mturk.com/mturk/preview?groupId=%';
-                } else {
-                    previewUrlPattern = '%Mock task launched.* for preview%';
-                }
-            } else if (process.env.MTURK_TYPE?.includes('prolific')) {
-                if (process.env.APP_ENV === 'prod' || process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
+            const prolificConfigs = fs.readFileSync('./.deploy/app_src/app/deploy.py', 'utf-8').split('\n')
+                    .map(line => line.trim().toLowerCase())
+                    .filter(line => line.startsWith("default_config_file") && line.includes("prolific"));
+            if (process.env.APP_ENV === 'prod') {
+                if (prolificConfigs.filter(line => line.includes("prod")).length > 0) {
+                    info("Using Prolific");
                     previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
                 } else {
-                    previewUrlPattern = '%Mock task launched.* for preview%';
+                    info("Using MTurk");
+                    previewUrlPattern = '%mturk\\.com/mturk/preview\\?groupId=%';
                 }
+            } if (process.env.APP_ENV === 'test' || process.env.APP_ENV === 'sb') {
+                if (prolificConfigs.filter(line => line.includes("test") || line.includes("sb")).length > 0) {
+                    info("Using Prolific");
+                    previewUrlPattern = '%Prolific Study .* has been published successfully with ID%';
+                } else {
+                    info("Using MTurk");
+                    previewUrlPattern = '%mturk\\.com/mturk/preview\\?groupId=%';
+                }
+            } else {
+                previewUrlPattern = '%Mock task launched.* for preview%';
             }
+            const grepPattern = previewUrlPattern?.slice(1,-1).replaceAll("\\", "");
 
             info("Preview URL pattern: " + previewUrlPattern);
             info("Waiting for confirmation...");
         
-            const grepPattern = previewUrlPattern?.slice(1,-1);
             const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
             
-            await execAsync(`while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${previewUrlPattern}' --since ${execTime}m | grep '${grepPattern}'; do sleep 5; echo 'Scanning for logs...'; done`,
+            await execAsync(`export check_time="${new Date(startTime).toISOString()}" && while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern="${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do export last_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ"); aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --since $check_time; export check_time=$last_time; sleep 2; done`,
             {
                 timeout: 1800000 // millis
             });
         
-            await execAsync(`aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern '${previewUrlPattern}' --since ${execTime}m`);
+        
+            // execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
+            // await execAsync(`aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern="${previewUrlPattern}" --since ${execTime}m`);
         });
         
     } catch (e: any) {

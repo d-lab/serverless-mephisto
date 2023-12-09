@@ -185,8 +185,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
             source: ["aws.ecs"],
             detailType: ["ECS Task State Change"],
             detail: {
-                desiredStatus: ["STOPPED"],
-                lastStatus: ["RUNNING", "STOPPED"]
+                desiredStatus: ["STOPPED"]
             }
         }
     });

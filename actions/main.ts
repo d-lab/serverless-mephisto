@@ -82,7 +82,7 @@ async function run(): Promise<void> {
             },
             {
                 replace: {
-                    pattern: new RegExp(`${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack\/${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-container\/[\w]+`, 'g'),
+                    pattern: new RegExp(`${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack\/${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-container\/[a-zA-Z0-9]+`, 'g'),
                     by: ''
                 }
             });

@@ -39,7 +39,8 @@ export const handler = async (event: EventBridgeEvent<any, any>, context: Contex
 
     const containerDomain = `${process.env.APP_NAME}.${process.env.DOMAIN}`;
     let recordSet = createRecordSet(containerDomain, taskPublicIp);
-    if (event.detail.lastStatus === 'RUNNING' && event.detail.desiredStatus === 'STOPPED') {
+    if (event.detail.lastStatus === 'RUNNING' && event.detail.desiredStatus === 'STOPPED' 
+        || event.detail.lastStatus === 'STOPPED' && event.detail.desiredStatus === 'STOPPED') {
         console.log(`Deleting DNS record for ${containerDomain} (${taskPublicIp})`);
         recordSet = deleteRecordSet(containerDomain, taskPublicIp);
     }

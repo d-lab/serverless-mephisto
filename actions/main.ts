@@ -79,6 +79,12 @@ async function run(): Promise<void> {
             await execAsync(`export check_time="${new Date(startTime).toISOString()}" && while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern="${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do export last_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ"); aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --since $check_time; export check_time=$last_time; sleep 2; done`,
             {
                 timeout: 1800000 // millis
+            },
+            {
+                replace: {
+                    pattern: new RegExp(`${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack\/${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-container\/[\w]+`, 'g'),
+                    by: ''
+                }
             });
         
         

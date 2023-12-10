@@ -126,7 +126,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
     
     container.addMountPoints({
         sourceVolume: assetVolume.name,
-        containerPath: "/mephisto/data",
+        containerPath: "/mephisto/data/results",
         readOnly: false,
     });
 

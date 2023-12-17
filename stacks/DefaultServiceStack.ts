@@ -162,7 +162,6 @@ export function DefaultServiceStack({ stack }: StackContext) {
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/syncS3.ts",
         handler: "handler",
-        role: taskDefinition.taskRole,
         environment: {
             BUCKET_NAME: 'mephisto-data',
             REGION: process.env.AWS_REGION as string,

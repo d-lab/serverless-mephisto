@@ -155,6 +155,25 @@ export function DefaultServiceStack({ stack }: StackContext) {
             DOMAIN: process.env.DOMAIN as string | 'aufederal2022.com'
         }
     });
+
+    const lambdaEfsMountedFolder = "/efs";
+
+    const syncS3Lambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-update-task-dns`, {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: "./lambda/syncS3.ts",
+        handler: "handler",
+        role: taskDefinition.taskRole,
+        environment: {
+            BUCKET_NAME: 'mephisto-data',
+            AWS_REGION: process.env.AWS_REGION as string,
+            S3_PATH: `/data-v2/${process.env.APP_NAME}`,
+            EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
+        },
+        timeout: Duration.minutes(10),
+        vpc: vpc,
+        filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder)
+    });
+
     const updateDnsPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -191,6 +210,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         }
     });
     deleteTaskRule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
+    deleteTaskRule.addTarget(new targets.LambdaFunction(syncS3Lambda));
 
     const runTaskPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,

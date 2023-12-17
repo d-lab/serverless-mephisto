@@ -156,7 +156,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         }
     });
 
-    const lambdaEfsMountedFolder = "/efs";
+    const lambdaEfsMountedFolder = "/mnt/efs/rsmp";
 
     const syncS3Lambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-sync-s3`, {
         runtime: lambda.Runtime.NODEJS_18_X,

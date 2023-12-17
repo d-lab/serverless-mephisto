@@ -5,7 +5,11 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 async function uploadDir(localPath: string) {
     const bucketName = process.env.BUCKET_NAME;
+    console.log("Bucket name: ", bucketName);
+    
     const s3Path = process.env.S3_PATH as string;
+    console.log("S3 path: ", s3Path);
+
     const client = new S3Client({ region: process.env.REGION });
 
     async function getFiles(dir: string): Promise<string | string[]> {
@@ -20,12 +24,18 @@ async function uploadDir(localPath: string) {
     }
 
     const files = (await getFiles(localPath)) as string[];
-    const uploads = files.map((filePath) =>
-        client.send(new PutObjectCommand({
-            Key: path.resolve(s3Path, path.relative(localPath, filePath)),
+    console.log("Local files: ", files);
+    
+    const uploads = files.map((filePath) => {
+        const fileKey = path.resolve(s3Path, path.relative(localPath, filePath));
+        console.log(fileKey);
+        return client.send(new PutObjectCommand({
+            Key: fileKey,
             Bucket: bucketName,
             Body: createReadStream(filePath),
-        }))
+        }));
+    }
+        
     );
     return Promise.all(uploads);
 }

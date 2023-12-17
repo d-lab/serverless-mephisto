@@ -6,7 +6,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 async function uploadDir(localPath: string) {
     const bucketName = process.env.BUCKET_NAME;
     const s3Path = process.env.S3_PATH as string;
-    const client = new S3Client({ region: process.env.AWS_REGION });
+    const client = new S3Client({ region: process.env.REGION });
 
     async function getFiles(dir: string): Promise<string | string[]> {
         const dirents = await fs.readdir(dir, { withFileTypes: true });

@@ -165,7 +165,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         role: taskDefinition.taskRole,
         environment: {
             BUCKET_NAME: 'mephisto-data',
-            AWS_REGION: process.env.AWS_REGION as string,
+            REGION: process.env.AWS_REGION as string,
             S3_PATH: `/data-v2/${process.env.APP_NAME}`,
             EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
         },

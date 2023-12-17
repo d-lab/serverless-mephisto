@@ -25,7 +25,7 @@ async function uploadDir(localPath: string) {
 
     const files = (await getFiles(localPath)) as string[];
     console.log("Local files: ", files);
-    
+
     const uploads = files.map((filePath) => {
         const fileKey = path.resolve(s3Path, path.relative(localPath, filePath));
         console.log(fileKey);
@@ -44,8 +44,13 @@ export const handler = async (event: EventBridgeEvent<any, any>, context: Contex
 
     const localPath = process.env.EFS_MOUNTED_FOLDER as string;
     console.log(`Syncing from EFS [${localPath}] to S3 folder ${process.env.S3_PATH}`)
-    await uploadDir(localPath);
-    console.log("Sync S3 completed!")
+    try {
+        await uploadDir(localPath);
+        console.log("Sync S3 completed!")
+    } catch (err) {
+        console.log("Sync S3 failed!");
+        console.log("Exception: ", err);
+    }
 
     return {
         statusCode: 200,

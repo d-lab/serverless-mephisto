@@ -27,7 +27,7 @@ async function uploadDir(localPath: string) {
     console.log("Local files: ", files);
 
     const uploads = files.map((filePath) => {
-        const fileKey = path.resolve(s3Path, path.relative(localPath, filePath));
+        const fileKey = path.resolve(s3Path, path.relative(localPath, filePath)).substring(1);
         console.log(fileKey);
         return client.send(new PutObjectCommand({
             Key: fileKey,

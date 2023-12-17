@@ -158,7 +158,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
 
     const lambdaEfsMountedFolder = "/efs";
 
-    const syncS3Lambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-update-task-dns`, {
+    const syncS3Lambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-sync-s3`, {
         runtime: lambda.Runtime.NODEJS_18_X,
         entry: "./lambda/syncS3.ts",
         handler: "handler",

@@ -169,7 +169,6 @@ export function DefaultServiceStack({ stack }: StackContext) {
             EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
         },
         timeout: Duration.minutes(10),
-        vpc: vpc,
         filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder)
     });
 

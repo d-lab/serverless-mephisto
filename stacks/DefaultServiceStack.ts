@@ -169,7 +169,9 @@ export function DefaultServiceStack({ stack }: StackContext) {
             EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
         },
         timeout: Duration.minutes(10),
-        filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder)
+        filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder),
+        vpc: vpc,
+        securityGroups: [securityGroup]
     });
 
     const updateDnsPolicyStatement = new iam.PolicyStatement({

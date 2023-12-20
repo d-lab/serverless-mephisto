@@ -174,6 +174,16 @@ export function DefaultServiceStack({ stack }: StackContext) {
         securityGroups: [securityGroup]
     });
 
+    const s3FullAccessPolicyStatement = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+            's3:*'
+        ],
+        resources: ['*']
+    });
+
+    syncS3Lambda.addToRolePolicy(s3FullAccessPolicyStatement);
+
     const updateDnsPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [

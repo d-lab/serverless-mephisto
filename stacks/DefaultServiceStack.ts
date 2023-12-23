@@ -170,8 +170,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
         },
         timeout: Duration.minutes(10),
         filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder),
-        vpc: vpc,
-        securityGroups: [securityGroup]
+        vpc: vpc
     });
 
     const s3FullAccessPolicyStatement = new iam.PolicyStatement({

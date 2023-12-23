@@ -128,7 +128,7 @@ export function DefaultServiceStack({ stack }: StackContext) {
     
     container.addMountPoints({
         sourceVolume: assetVolume.name,
-        containerPath: "/mephisto/data/data",
+        containerPath: "/mephisto/data/results",
         readOnly: false,
     });
 
@@ -157,6 +157,34 @@ export function DefaultServiceStack({ stack }: StackContext) {
             DOMAIN: process.env.DOMAIN as string | 'aufederal2022.com'
         }
     });
+
+    const lambdaEfsMountedFolder = "/mnt/mpt-efs";
+
+    const syncS3Lambda = new lambdaNode.NodejsFunction(stack, `${stack.stackName}-sync-s3`, {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: "./lambda/syncS3.ts",
+        handler: "handler",
+        environment: {
+            BUCKET_NAME: 'mephisto-data',
+            REGION: process.env.AWS_REGION as string,
+            S3_PATH: `/data-v2/${process.env.APP_NAME}`,
+            EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
+        },
+        timeout: Duration.minutes(10),
+        filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder),
+        vpc: vpc
+    });
+
+    const s3FullAccessPolicyStatement = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+            's3:*'
+        ],
+        resources: ['*']
+    });
+
+    syncS3Lambda.addToRolePolicy(s3FullAccessPolicyStatement);
+
     const updateDnsPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -188,11 +216,12 @@ export function DefaultServiceStack({ stack }: StackContext) {
             detailType: ["ECS Task State Change"],
             detail: {
                 desiredStatus: ["STOPPED"],
-                lastStatus: ["RUNNING"]
+                lastStatus: ["DEPROVISIONING", "RUNNING", "STOPPED"]
             }
         }
     });
     deleteTaskRule.addTarget(new targets.LambdaFunction(updateTaskDnsLambda));
+    deleteTaskRule.addTarget(new targets.LambdaFunction(syncS3Lambda));
 
     const runTaskPolicyStatement = new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,

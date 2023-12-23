@@ -43,7 +43,8 @@ async function run(): Promise<void> {
         });
 
         stream.on('exit', async () => {
-            let execTime = Math.ceil((new Date().getTime() - startTime) / 60000);
+            const execTimeInMillis = (new Date().getTime() - startTime);
+            let execTime = Math.ceil(execTimeInMillis / 60000);
             info(`Deployment process time: ${execTime} minutes`);
 
             let previewUrlPattern = null;
@@ -76,9 +77,10 @@ async function run(): Promise<void> {
         
             const getLogStreamSubCmd = `$(aws ecs list-tasks --cluster ${process.env.APP_ENV}-${process.env.APP_NAME}-DefaultServiceStack-cluster --desired-status RUNNING | jq -r '.taskArns[0]' | awk -v delimeter='task/' '{split($0,a,delimeter)} END{print a[2]}' | awk -v delimeter='-cluster/' '{split($0,a,delimeter)} END{printf "%s/%s-container/%s", a[1], a[1], a[2]}' || '')`;
             
+            const TIMEOUT = 1800000;
             await execAsync(`export check_time="${new Date(startTime).toISOString()}" && while ! aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --filter-pattern="${previewUrlPattern}" --since ${execTime}m | grep "${grepPattern}"; do export last_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ"); aws logs tail mephisto-apps-log-group --log-stream-names ${getLogStreamSubCmd} --since $check_time; export check_time=$last_time; sleep 2; done`,
             {
-                timeout: 1800000 // millis
+                timeout: TIMEOUT // millis
             },
             {
                 replace: {
@@ -86,6 +88,10 @@ async function run(): Promise<void> {
                     by: ''
                 }
             });
+
+            if ((new Date().getTime() - startTime) >= TIMEOUT + execTimeInMillis) {
+                setFailed("Can't get confirmation before timeout")
+            }
         
         
             // execTime = Math.ceil((new Date().getTime() - startTime) / 60000);

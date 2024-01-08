@@ -7,7 +7,8 @@ async function run(): Promise<void> {
     try {
         info("Cloning deployment kit into the board");
         await execAsync(`git clone --branch ${process.env.SVLD_VERSION as string} https://github.com/d-lab/serverless-mephisto .deploy`)
-        await execAsync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
+        // await execAsync("mkdir -p ./.deploy/app_src && rsync -a --exclude=./.deploy ./ ./.deploy/app_src");
+        await execAsync("mkdir -p ./.deploy/app_src && rsync -a ./app ./.deploy/app_src");
         
         info("Signing in ECR");
         await execAsync(`aws ecr get-login-password --region ${process.env.AWS_REGION as string} | docker login --username AWS ` +

@@ -42,6 +42,17 @@ async function uploadDir(localPath: string) {
 
 export const handler = async (event: EventBridgeEvent<any, any>, context: Context): Promise<APIGatewayProxyResult | undefined> => {
 
+    const task = event.detail;
+    const clusterArn = task.clusterArn;
+    console.log(`clusterArn: ${clusterArn}`);
+
+    const clusterName = clusterArn.split(':cluster/')[1];
+
+    if (clusterName !== process.env.CLUSTER_NAME) {
+        console.log("Another app triggered, skip for this cluster");
+        return;
+    }
+
     const localPath = process.env.EFS_MOUNTED_FOLDER as string;
     console.log(`Syncing from EFS [${localPath}] to S3 folder ${process.env.S3_PATH}`)
     try {

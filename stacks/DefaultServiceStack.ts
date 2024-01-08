@@ -51,7 +51,6 @@ export function DefaultServiceStack({ stack }: StackContext) {
         resources: ['*']
     }));
 
-    console.log("PROLIFIC_API_KEY: ", process.env.PROLIFIC_API_KEY)
     const container = taskDefinition.addContainer(`${stack.stackName}-container`, {
         image: ecs.ContainerImage.fromDockerImageAsset(new DockerImageBuilder()
             .withStack(stack)

@@ -55,6 +55,7 @@ export default class DockerImageBuilder {
             directory: this.path,
             buildArgs: this.buildArgs,
             platform: Platform.LINUX_AMD64,
+            cacheDisabled: true,
             // cacheFrom: [{
             //     type: 'gha',
             //     params: {}

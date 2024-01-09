@@ -178,7 +178,8 @@ export function DefaultServiceStack({ stack }: StackContext) {
             BUCKET_NAME: 'mephisto-data',
             REGION: process.env.AWS_REGION as string,
             S3_PATH: `/data-v2/${process.env.APP_NAME}`,
-            EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder
+            EFS_MOUNTED_FOLDER: lambdaEfsMountedFolder,
+            CLUSTER_NAME: cluster.clusterName
         },
         timeout: Duration.minutes(10),
         filesystem: lambda.FileSystem.fromEfsAccessPoint(efsAccessPoint, lambdaEfsMountedFolder),
